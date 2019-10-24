@@ -1,6 +1,7 @@
 package globalid
 
 import (
+	"context"
 	"reflect"
 
 	"github.com/sensu/sensu-go/types"
@@ -24,7 +25,7 @@ func (n NamedComponents) Name() string {
 // Standard Translator
 //
 
-type encoderFunc func(interface{}) Components
+type encoderFunc func(context.Context, interface{}) Components
 type decoderFunc func(StandardComponents) Components
 
 type commonTranslator struct {
@@ -42,13 +43,13 @@ func (r commonTranslator) IsResponsible(record interface{}) bool {
 	return r.isResponsibleFunc(record)
 }
 
-func (r commonTranslator) Encode(record interface{}) Components {
-	components := r.encodeFunc(record)
+func (r commonTranslator) Encode(ctx context.Context, record interface{}) Components {
+	components := r.encodeFunc(ctx, record)
 	return components
 }
 
-func (r commonTranslator) EncodeToString(record interface{}) string {
-	components := r.Encode(record)
+func (r commonTranslator) EncodeToString(ctx context.Context, record interface{}) string {
+	components := r.Encode(ctx, record)
 	return components.String()
 }
 
@@ -87,7 +88,7 @@ func standardDecoder(components StandardComponents) Components {
 
 // standardEncoder encodes record given name and unique field name
 func standardEncoder(name string, fNames ...string) encoderFunc {
-	return func(record interface{}) Components {
+	return func(ctx context.Context, record interface{}) Components {
 		// Retrieve the value of the specified field
 		fVal := reflect.ValueOf(record)
 		for _, fName := range fNames {
@@ -102,6 +103,9 @@ func standardEncoder(name string, fNames ...string) encoderFunc {
 		if multiRecord, ok := record.(types.MultitenantResource); ok {
 			addMultitenantFields(&components, multiRecord)
 		}
+
+		// Populate cluster field from given context
+		// components.cluster = graphql.ClusterFromContext(ctx)
 
 		return components
 	}

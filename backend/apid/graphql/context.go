@@ -7,6 +7,23 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 )
 
+var clusterKey key
+
+// ContextWithCluster returns new context with given cluster name added to the
+// context.
+func ContextWithCluster(ctx context.Context, name string) context.Context {
+	return context.WithValue(ctx, clusterKey, name)
+}
+
+// ClusterFromContext return cluster name stored in the given context; returns
+// empty string if missing.
+func ClusterFromContext(ctx context.Context) string {
+	if val := ctx.Value(clusterKey); val != nil {
+		return val.(string)
+	}
+	return ""
+}
+
 // setContextFromComponents takes a context and global id components, adds the
 // namespace to the context, and returns the updated context.
 func setContextFromComponents(ctx context.Context, c globalid.Components) context.Context {

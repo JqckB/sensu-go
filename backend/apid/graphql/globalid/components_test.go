@@ -4,11 +4,12 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestParse(t *testing.T) {
-	assert := assert.New(t)
 	type wants struct {
+		cluster string
 		res     string
 		nsp     string
 		resType string
@@ -27,15 +28,24 @@ func TestParse(t *testing.T) {
 		{"srn:u:ns:1", wants{res: "u", nsp: "ns", id: "1"}},
 		{"srn:users:cat/123", wants{res: "users", resType: "cat", id: "123"}},
 		{"srn:x:y:*:z", wants{res: "x", nsp: "y", id: "*:z"}},
+		{"srn:@us-west:x:y:z", wants{cluster: "us-west", res: "x", nsp: "y", id: "z"}},
+		{"srn:@us-west:users:bob", wants{cluster: "us-west", res: "users", id: "bob"}},
+		{"srn:@us-west:mutators", wants{err: true}},
+		{"srn:@us-west:", wants{err: true}},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.gid, func(t *testing.T) {
 			components, err := Parse(tc.gid)
-			assert.Equal(tc.want.err, err != nil, "error was expected in result")
-			assert.Equal(tc.want.res, components.Resource())
-			assert.Equal(tc.want.nsp, components.Namespace())
-			assert.Equal(tc.want.resType, components.ResourceType())
-			assert.Equal(tc.want.id, components.UniqueComponent())
+			if tc.want.err {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.want.cluster, components.Cluster())
+			assert.Equal(t, tc.want.res, components.Resource())
+			assert.Equal(t, tc.want.nsp, components.Namespace())
+			assert.Equal(t, tc.want.resType, components.ResourceType())
+			assert.Equal(t, tc.want.id, components.UniqueComponent())
 		})
 	}
 }
