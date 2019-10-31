@@ -30,6 +30,9 @@ type Components interface {
 	// Resource definition associated with this ID.
 	Resource() string
 
+	// SetResource value.
+	SetResource(string)
+
 	// Namespace is the name of the namespace the resource belongs to.
 	Namespace() string
 
@@ -41,8 +44,8 @@ type Components interface {
 	// this is the resource's name.
 	UniqueComponent() string
 
-	// GetExtra return value for given key within extras dict
-	GetExtra(key string) string
+	// Extra return value for given key within extras dict
+	Extra(key string) string
 
 	// SetExtra sets value for given key within extras dict
 	SetExtra(key, val string)
@@ -85,6 +88,11 @@ func (id StandardComponents) Resource() string {
 	return id.resource
 }
 
+// Resource definition associated with this ID.
+func (id StandardComponents) SetResource(str string) {
+	id.resource = str
+}
+
 // Namespace is the name of the namespace the resource belongs to.
 func (id StandardComponents) Namespace() string {
 	return id.namespace
@@ -102,8 +110,8 @@ func (id StandardComponents) UniqueComponent() string {
 	return id.uniqueComponent
 }
 
-// GetExtra returns the extra value associated with the given key.
-func (id StandardComponents) GetExtra(key string) string {
+// Extra returns the extra value associated with the given key.
+func (id StandardComponents) Extra(key string) string {
 	return id.extras.Get(key)
 }
 

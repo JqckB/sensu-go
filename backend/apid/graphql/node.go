@@ -41,13 +41,13 @@ func newNodeResolver(cfg ServiceConfig) *nodeResolver {
 	return &nodeResolver{&register}
 }
 
-func (r *nodeResolver) FindType(i interface{}) *graphql.Type {
+func (r *nodeResolver) FindType(ctx context.Context, i interface{}) *graphql.Type {
 	translator, err := globalid.ReverseLookup(i)
 	if err != nil {
 		return nil
 	}
 
-	components := translator.Encode(i)
+	components := translator.Encode(ctx, i)
 	resolver := r.register.Lookup(components)
 	if resolver == nil {
 		logger := logger.WithField("translator", fmt.Sprintf("%#v", translator))
