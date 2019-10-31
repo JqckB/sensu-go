@@ -16,7 +16,7 @@ import (
 //
 
 type nodeResolver struct {
-	register relay.NodeRegister
+	register *relay.NodeRegister
 }
 
 func newNodeResolver(cfg ServiceConfig) *nodeResolver {
@@ -38,7 +38,7 @@ func newNodeResolver(cfg ServiceConfig) *nodeResolver {
 	registerNamespaceNodeResolver(register, cfg.NamespaceClient)
 	registerSilencedNodeResolver(register, cfg.SilencedClient)
 
-	return &nodeResolver{register}
+	return &nodeResolver{&register}
 }
 
 func (r *nodeResolver) FindType(i interface{}) *graphql.Type {

@@ -75,7 +75,7 @@ var EventTranslator = commonTranslator{
 }
 
 // Register event encoder/decoder
-func init() { registerTranslator(EventTranslator) }
+func init() { RegisterTranslator(EventTranslator) }
 
 //
 // Example output:

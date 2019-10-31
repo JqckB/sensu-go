@@ -38,4 +38,4 @@ var NamespaceTranslator = commonTranslator{
 }
 
 // Register entity encoder/decoder
-func init() { registerTranslator(NamespaceTranslator) }
+func init() { RegisterTranslator(NamespaceTranslator) }
