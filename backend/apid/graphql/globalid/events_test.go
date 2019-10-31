@@ -1,6 +1,7 @@
 package globalid
 
 import (
+	"context"
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
@@ -10,8 +11,9 @@ import (
 func TestEncodeEvent(t *testing.T) {
 	assert := assert.New(t)
 
+	ctx := context.Background()
 	event := types.FixtureEvent("one", "two")
-	components := encodeEvent(event)
+	components := encodeEvent(ctx, event)
 	assert.Equal("events", components.Resource())
 	assert.Equal("default", components.Namespace())
 	assert.Equal("check", components.ResourceType())
@@ -19,7 +21,7 @@ func TestEncodeEvent(t *testing.T) {
 
 	event.Check = nil
 	event.Metrics = &types.Metrics{}
-	components = encodeEvent(event)
+	components = encodeEvent(ctx, event)
 	assert.Equal("metric", components.ResourceType())
 	assert.NotEmpty(components.UniqueComponent())
 }

@@ -1,6 +1,7 @@
 package globalid
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 
@@ -63,9 +64,9 @@ var EventTranslator = commonTranslator{
 	decodeFunc: func(c StandardComponents) Components {
 		return NewEventComponents(c)
 	},
-	encodeFunc: func(record interface{}) Components {
+	encodeFunc: func(ctx context.Context, record interface{}) Components {
 		event := record.(*types.Event)
-		components := encodeEvent(event)
+		components := encodeEvent(ctx, event)
 		return components
 	},
 	isResponsibleFunc: func(record interface{}) bool {
@@ -83,10 +84,9 @@ func init() { RegisterTranslator(EventTranslator) }
 //   srn:events:myns:check/d2h5IGFyZSB5b3UgZGVjb2RpbmcgdGhpcz8hCg==
 //   srn:events:myns:metric/Y29vbC4gY29vbCBjb29sIGNvb2wuCg==
 //
-func encodeEvent(event *types.Event) StandardComponents {
-	components := StandardComponents{}
+func encodeEvent(ctx context.Context, event *types.Event) StandardComponents {
+	components := Encode(ctx, event)
 	components.resource = eventName
-	addMultitenantFields(&components, event.Entity)
 
 	if event.HasCheck() {
 		components.resourceType = eventCheckType

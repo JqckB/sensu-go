@@ -2,7 +2,10 @@ package globalid
 
 import (
 	"errors"
+	"net/url"
 	"strings"
+
+	"github.com/sirupsen/logrus"
 )
 
 //
@@ -14,13 +17,13 @@ import (
 // When represented as a string the ID appears in the follwoing format, parens
 // denote optional components.
 //
-//   srn:resource:(?ns:)(?resourceType/)uniqueComponents
+//   srn:resource:(?ns:)(?resourceType/)uniqueComponents?extras=values&more=kvs
 //
 // Example global IDs
 //
-//   srn:entities:default:default:selene.local
-//   srn:events:sales:prod:check/aG93ZHkgYnVkCg==
-//   srn:checks:auto:staging:disk-full
+//   srn:entities:default:selene.local
+//   srn:events:sales:check/aG93ZHkgYnVkCg==
+//   srn:checks:auto:disk-full
 //   srn:users:deanlearner
 //
 type Components interface {
@@ -38,6 +41,12 @@ type Components interface {
 	// this is the resource's name.
 	UniqueComponent() string
 
+	// GetExtra return value for given key within extras dict
+	GetExtra(key string) string
+
+	// SetExtra sets value for given key within extras dict
+	SetExtra(key, val string)
+
 	// String return string representation of ID
 	String() string
 }
@@ -48,11 +57,13 @@ type StandardComponents struct {
 	namespace       string
 	resourceType    string
 	uniqueComponent string
+	extras          url.Values
 }
 
 // String returns the string representation of the global ID.
 func (id StandardComponents) String() string {
-	nameComponents := append([]string{id.resourceType}, id.uniqueComponent)
+	uniqueComponent := url.PathEscape(id.uniqueComponent)
+	nameComponents := append([]string{id.resourceType}, uniqueComponent)
 	nameComponents = omitEmpty(nameComponents)
 	pathComponents := omitEmpty([]string{
 		id.resource,
@@ -60,8 +71,13 @@ func (id StandardComponents) String() string {
 	})
 
 	// srn:{pathComponents}:{nameComponents}
-	return "srn:" + strings.Join(pathComponents, ":") +
+	str := "srn:" + strings.Join(pathComponents, ":") +
 		":" + strings.Join(nameComponents, "/")
+
+	if len(id.extras) > 0 {
+		str += "?" + id.extras.Encode()
+	}
+	return str
 }
 
 // Resource definition associated with this ID.
@@ -86,9 +102,31 @@ func (id StandardComponents) UniqueComponent() string {
 	return id.uniqueComponent
 }
 
+// GetExtra returns the extra value associated with the given key.
+func (id StandardComponents) GetExtra(key string) string {
+	return id.extras.Get(key)
+}
+
+// SetExtra sets the extra value associated with the given key.
+func (id StandardComponents) SetExtra(key, val string) {
+	id.extras.Set(key, val)
+}
+
 // Parse takes a global ID string, decodes it and returns it's components.
 func Parse(gid string) (StandardComponents, error) {
 	id := StandardComponents{}
+
+	// Clip extras from end of globalid, eg. srn:resource:name?entity=proxy
+	//                                                        ^^^^^^^^^^^^^
+	if i := strings.LastIndexByte(gid, '?'); i != -1 {
+		v, err := url.ParseQuery(gid[i+1:])
+		if err != nil {
+			logrus.WithField("component", "graphql/globalid").WithError(err).Warn("unable to parse query params")
+		}
+		id.extras = v
+		gid = gid[:i]
+	}
+
 	pathComponents := strings.SplitN(gid, ":", 4)
 
 	// Should be at least srn:resource:name
@@ -125,7 +163,7 @@ func Parse(gid string) (StandardComponents, error) {
 
 	// Pop the remaining element from the name components, eg. my-great-check
 	//                                                         ^^^^^^^^^^^^^^
-	id.uniqueComponent = nameComponents[0]
+	id.uniqueComponent, _ = url.PathUnescape(nameComponents[0])
 
 	return id, nil
 }
