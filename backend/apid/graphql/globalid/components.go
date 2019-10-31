@@ -64,7 +64,7 @@ type StandardComponents struct {
 }
 
 // String returns the string representation of the global ID.
-func (id StandardComponents) String() string {
+func (id *StandardComponents) String() string {
 	uniqueComponent := url.PathEscape(id.uniqueComponent)
 	nameComponents := append([]string{id.resourceType}, uniqueComponent)
 	nameComponents = omitEmpty(nameComponents)
@@ -84,45 +84,48 @@ func (id StandardComponents) String() string {
 }
 
 // Resource definition associated with this ID.
-func (id StandardComponents) Resource() string {
+func (id *StandardComponents) Resource() string {
 	return id.resource
 }
 
 // Resource definition associated with this ID.
-func (id StandardComponents) SetResource(str string) {
+func (id *StandardComponents) SetResource(str string) {
 	id.resource = str
 }
 
 // Namespace is the name of the namespace the resource belongs to.
-func (id StandardComponents) Namespace() string {
+func (id *StandardComponents) Namespace() string {
 	return id.namespace
 }
 
 // ResourceType is a optional element that describes any sort of sub-type of
 // the resource.
-func (id StandardComponents) ResourceType() string {
+func (id *StandardComponents) ResourceType() string {
 	return id.resourceType
 }
 
 // UniqueComponent is a string that uniquely identify a resource; often times
 // this is the resource's name.
-func (id StandardComponents) UniqueComponent() string {
+func (id *StandardComponents) UniqueComponent() string {
 	return id.uniqueComponent
 }
 
 // Extra returns the extra value associated with the given key.
-func (id StandardComponents) Extra(key string) string {
+func (id *StandardComponents) Extra(key string) string {
 	return id.extras.Get(key)
 }
 
 // SetExtra sets the extra value associated with the given key.
-func (id StandardComponents) SetExtra(key, val string) {
+func (id *StandardComponents) SetExtra(key, val string) {
+	if id.extras == nil {
+		id.extras = url.Values{}
+	}
 	id.extras.Set(key, val)
 }
 
 // Parse takes a global ID string, decodes it and returns it's components.
-func Parse(gid string) (StandardComponents, error) {
-	id := StandardComponents{}
+func Parse(gid string) (*StandardComponents, error) {
+	id := &StandardComponents{}
 
 	// Clip extras from end of globalid, eg. srn:resource:name?entity=proxy
 	//                                                        ^^^^^^^^^^^^^

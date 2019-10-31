@@ -13,7 +13,7 @@ import (
 
 // NamedComponents adds Name method that returns first element of
 // global ID's uniqueComponents.
-type NamedComponents struct{ StandardComponents }
+type NamedComponents struct{ *StandardComponents }
 
 // Name method returns first element of global ID's uniqueComponents. Congurent
 // with most Sensu records Check#Name, Entity#ID, Asset#name, etc.
@@ -67,7 +67,7 @@ func addMultitenantFields(c *StandardComponents, r types.MultitenantResource) {
 
 // standardDecoder instantiates new NamedComponents composite.
 func standardDecoder(components StandardComponents) Components {
-	return NamedComponents{components}
+	return NamedComponents{&components}
 }
 
 // standardEncoder encodes record given name and unique field name
@@ -87,7 +87,7 @@ func standardEncoder(name string, fNames ...string) encoderFunc {
 
 		// Add namespace to global id components
 		if multiRecord, ok := record.(types.MultitenantResource); ok {
-			addMultitenantFields(&components, multiRecord)
+			addMultitenantFields(components, multiRecord)
 		}
 
 		return components

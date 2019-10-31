@@ -30,7 +30,7 @@ var NamespaceTranslator = commonTranslator{
 	encodeFunc: func(ctx context.Context, record interface{}) Components {
 		components := Encode(ctx, record)
 		components.resource = namespaceName
-		return &components
+		return components
 	},
 }
 
