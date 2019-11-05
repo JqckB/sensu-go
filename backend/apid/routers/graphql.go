@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -64,10 +63,7 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 		// Extract query and variables
 		query, _ := op["query"].(string)
 		queryVars, _ := op["variables"].(map[string]interface{})
-		var skipValidate bool
-		if v, ok := op["skip_validation"].(string); ok {
-			skipValidate, _ = strconv.ParseBool(v)
-		}
+		skipValidate, _ := op["skip_validation"].(bool)
 
 		// Execute given query
 		result := r.Service.Do(ctx, graphql.QueryParams{
